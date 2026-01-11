@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RHAY Studio Pocket</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 4px;
+            width: 4px;
+            background: #1f2937;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 6px;
+            border: 1px solid #1f2937;
+        }
+        /* Disable selection & Zoom behaviors */
+        body {
+            user-select: none;
+            -webkit-user-select: none;
+            overscroll-behavior: none;
+            touch-action: none;
+        }
+        input[type=range] {
+            -webkit-appearance: none; 
+            background: transparent; 
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: #3b82f6;
+            margin-top: -5px; 
+            cursor: pointer;
+            box-shadow: 0 0 2px rgba(0,0,0,0.5);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #4b5563;
+            border-radius: 2px;
+        }
+        .lyrics-bar {
+            background-image: linear-gradient(to right, #6b7280 1px, transparent 1px);
+        }
+        .lyrics-chunk {
+            transition: background-color 0.2s;
+            cursor: text;
+        }
+        .lyrics-chunk:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .lyrics-input-inline {
+            background: #1f2937;
+            color: #fcd34d;
+            border: 1px solid #3b82f6;
+            outline: none;
+            width: 100%;
+            height: 100%;
+            padding: 0 4px;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+        .clip-selected {
+            border: 2px solid white !important;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            z-index: 10;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* --- LOGIN SCREEN STYLES (Adapted for Dark Theme) --- */
+        #login-screen {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: #111827; /* Gray 900 */
+            z-index: 2000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .login-card {
+            background: #1f2937; /* Gray 800 */
+            width: 100%; max-width: 350px;
+            padding: 2rem; border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-align: center;
+            border: 1px solid #374151;
+        }
+        .login-icon-box {
+            width: 80px; height: 80px; background: #374151; color: #3b82f6;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.5rem auto;
+        }
+        .device-id-box {
+            background: #111827; padding: 1rem; border-radius: 10px;
+            border: 1px solid #374151; margin-bottom: 1.5rem;
+        }
+        .info-box {
+            background: #374151; color: #e5e7eb; border: 1px solid #4b5563;
+            padding: 1rem; border-radius: 10px; font-size: 0.85rem; text-align: left; margin-bottom: 1.5rem;
+        }
+        .login-input {
+            width: 100%; text-align: center; font-size: 1.25rem; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;
+            padding: 1rem; border: 2px solid #4b5563; border-radius: 10px; margin-bottom: 1rem; outline: none; background: #111827; color: white;
+        }
+        .login-input:focus { border-color: #3b82f6; }
+        .btn-submit { width: 100%; padding: 1rem; background: #3b82f6; color: white; border: none; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        .btn-submit:hover { background: #2563eb; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans h-[100dvh] flex flex-col overflow-hidden">
+
+    <!-- LOGIN SCREEN (ACTIVATION) -->
+    <div id="login-screen">
+        <div class="login-card">
+            <div class="login-icon-box">
+                <i data-lucide="lock" width="40" height="40"></i>
+            </div>
+            <h2 class="text-xl font-bold mb-1 text-blue-500">RHAY STUDIO</h2>
+            <p class="text-sm text-gray-400 mb-4">Activation Requise</p>
+
+            <div class="device-id-box">
+                <p class="text-[10px] font-bold text-gray-500" style="text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">ID APPAREIL</p>
+                <div class="text-xl font-bold text-white font-mono" id="device-id-display">----</div>
+            </div>
+
+            <div class="info-box">
+                <strong>Important :</strong> Alefaso SMS any @ <span class="text-yellow-400 font-bold">034 97 429 61</span> ny code ID ahazoanao ny CLE D'Activation, sarany : <span class="text-green-400 font-bold">20 000 Ar</span>
+            </div>
+
+            <input type="text" id="activation-code" placeholder="CODE" class="login-input">
+            
+            <button onclick="app.login()" class="btn-submit">
+                HAMOHA (Activer)
+            </button>
+        </div>
+    </div>
+
+    <!-- WRAPPER APP CONTENT -->
+    <div id="app-content" style="display:none; height: 100%; flex-direction: column;" class="flex-1 overflow-hidden">
+        
+        <!-- HEADER -->
+        <div class="h-14 bg-gray-800 border-b border-gray-700 flex items-center px-2 z-10 shrink-0 overflow-x-auto no-scrollbar whitespace-nowrap gap-4">
+            
+            <!-- Logo Section -->
+            <div class="flex items-center gap-2 shrink-0">
+                <i data-lucide="layers" class="text-blue-500 w-6 h-6"></i>
+                <div class="flex flex-col leading-none">
+                    <h1 class="text-lg font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                        RHAY
+                    </h1>
+                    <span class="text-[10px] text-gray-300 font-bold tracking-widest uppercase">STUDIO POCKET</span>
+                </div>
+            </div>
+
+            <!-- Zoom -->
+            <div class="flex items-center bg-gray-700 rounded shrink-0">
+                <button id="btn-zoom-out" class="p-1.5 hover:text-white text-gray-400" title="Rétrécir">
+                    <i data-lucide="zoom-out" size="16"></i>
+                </button>
+                <button id="btn-zoom-in" class="p-1.5 hover:text-white text-gray-400" title="Élargir">
+                    <i data-lucide="zoom-in" size="16"></i>
+                </button>
+            </div>
+            
+            <div class="w-[1px] h-6 bg-gray-700 shrink-0"></div>
+
+            <!-- Controls BPM -->
+            <div class="flex items-center bg-gray-900 rounded border border-gray-600 px-2 py-1 gap-2 shrink-0">
+                <i data-lucide="activity" size="14" class="text-gray-400"></i>
+                <input type="number" id="bpm-input" value="120" min="40" max="240" class="w-10 bg-transparent text-center text-sm focus:outline-none" title="BPM">
+                <button id="btn-metronome" class="text-gray-500 hover:text-white transition" title="Métronome">
+                    <i data-lucide="triangle" size="14" class="fill-current rotate-180"></i>
+                </button>
+            </div>
+
+            <!-- Time Display -->
+            <div class="flex items-center bg-black rounded-md px-2 py-1 font-mono text-lg text-green-400 border border-gray-700 shadow-inner w-24 justify-center shrink-0" id="time-display">
+                0:00.0
+            </div>
+
+            <div class="w-[1px] h-6 bg-gray-700 shrink-0"></div>
+
+            <!-- Edit Tools -->
+            <div class="flex items-center gap-1 bg-gray-700 rounded px-1 shrink-0">
+                <button id="btn-split" class="p-1.5 text-gray-400 hover:text-yellow-400 disabled:opacity-30" title="Couper" disabled>
+                    <i data-lucide="scissors" size="16"></i>
+                </button>
+                <button id="btn-delete" class="p-1.5 text-gray-400 hover:text-red-500 disabled:opacity-30" title="Supprimer" disabled>
+                    <i data-lucide="trash-2" size="16"></i>
+                </button>
+            </div>
+
+            <!-- Lyrics Btn -->
+            <button id="btn-lyrics-modal" class="flex items-center gap-1 bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-sm transition shrink-0" title="Paroles">
+                <i data-lucide="align-left" size="16"></i>
+            </button>
+
+            <div class="flex-1"></div> 
+
+            <!-- Right Group -->
+            <div class="flex gap-2 items-center shrink-0">
+                <button id="btn-lang" class="px-2 py-1 text-xs font-bold bg-gray-700 hover:bg-gray-600 rounded text-yellow-400 border border-gray-600">
+                    MG
+                </button>
+                
+                <button onclick="app.logout()" class="p-1 text-gray-500 hover:text-red-400 border border-gray-700 rounded" title="Verrouiller">
+                    <i data-lucide="lock" size="14"></i>
+                </button>
+
+                <!-- Project Actions -->
+                <div class="flex items-center bg-gray-700 rounded px-1 h-8">
+                    <button id="btn-save-project" class="p-2 text-gray-300 hover:text-blue-400 transition" title="Sauvegarder">
+                        <i data-lucide="save" size="16"></i>
+                    </button>
+                    <button id="btn-load-project" class="p-2 text-gray-300 hover:text-green-400 transition" title="Ouvrir">
+                        <i data-lucide="folder-open" size="16"></i>
+                    </button>
+                    <div class="w-[1px] h-4 bg-gray-600 mx-1"></div>
+                    <button id="btn-export" class="p-2 text-gray-300 hover:text-purple-400 transition" title="Export WAV">
+                        <i data-lucide="download" size="16"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN WORKSPACE -->
+        <div class="flex-1 flex overflow-hidden relative">
+            <div class="w-32 md:w-48 bg-gray-800 border-r border-gray-700 flex-shrink-0 z-20 shadow-xl flex flex-col" id="track-controls-container">
+                <div id="lyrics-sidebar-header" class="h-12 bg-gray-750 border-b border-gray-700 flex items-center justify-center md:justify-start px-2 text-xs font-semibold text-yellow-400 uppercase tracking-wider shrink-0 hidden">
+                    <i data-lucide="mic-2" size="14" class="md:mr-2"></i> <span class="hidden md:inline" data-i18n="lyrics_header">Paroles</span>
+                </div>
+                <div class="h-8 bg-gray-700 flex items-center justify-between px-2 text-[10px] md:text-xs font-semibold text-gray-400 uppercase tracking-wider shrink-0">
+                    <span data-i18n="tracks_header">Pistes</span>
+                    <span class="opacity-50 hidden md:inline">Vol</span>
+                </div>
+                <div id="track-list" class="flex-1 overflow-y-auto custom-scrollbar touch-pan-y"></div>
+            </div>
+
+            <div class="flex-1 bg-gray-900 relative overflow-x-auto overflow-y-hidden custom-scrollbar touch-pan-x" id="timeline-scroll-area">
+                <div id="timeline-content" class="absolute top-0 bottom-0 relative" style="min-width: 100%;">
+                    <div id="ruler" class="h-8 bg-gray-800 border-b border-gray-600 relative cursor-pointer sticky top-0 z-10 w-full"></div>
+                    <div id="lyrics-lane" class="h-12 bg-gray-800/80 border-b border-gray-600 relative w-full hidden lyrics-bar overflow-hidden flex items-center cursor-text" title="Double-cliquez"></div>
+                    <div id="grid-bg" class="absolute inset-0 pointer-events-none opacity-10" style="top: 32px;"></div>
+                    <div id="timeline-tracks" class="flex flex-col relative" style="top: 0px;"></div>
+                    <div id="playhead" class="absolute top-0 bottom-0 w-[2px] bg-white z-30 pointer-events-none shadow-[0_0_10px_rgba(255,255,255,0.5)]" style="left: 0px;">
+                        <div class="w-3 h-3 -ml-[5px] bg-white transform rotate-45 -mt-1.5 rounded-sm"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER (TRANSPORT) -->
+        <div class="h-20 bg-gray-800 border-t border-gray-700 flex items-center justify-center gap-4 md:gap-8 px-2 z-50 shadow-2xl shrink-0 relative">
+            <div id="init-overlay" class="absolute inset-0 bg-gray-800/95 flex items-center justify-center z-50">
+                 <div class="text-center w-full max-w-sm px-4">
+                     <button id="btn-init" class="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-full font-bold shadow-lg animate-bounce transition text-lg w-full" data-i18n="start_btn">
+                         Démarrer
+                     </button>
+                     <div id="debug-msg" class="mt-4 text-[10px] text-gray-400 font-mono hidden break-words bg-black/50 p-2 rounded"></div>
+                 </div>
+            </div>
+
+            <div class="flex flex-col gap-1 absolute left-2 text-[10px] md:text-xs text-gray-500">
+                <div class="flex items-center gap-1">
+                    <input type="checkbox" id="chk-auto-return" checked class="accent-blue-500">
+                    <label for="chk-auto-return" data-i18n="auto_return">Retour</label>
+                </div>
+                <div class="flex items-center gap-1">
+                    <input type="checkbox" id="chk-show-lyrics" class="accent-yellow-500">
+                    <label for="chk-show-lyrics" class="text-yellow-500" data-i18n="show_lyrics">Paroles</label>
+                </div>
+            </div>
+
+            <button id="btn-rewind" class="text-gray-400 hover:text-white p-3 md:p-2" title="Retour début">
+                <i data-lucide="rewind" size="24"></i>
+            </button>
+            
+            <button id="btn-play" class="p-4 rounded-full shadow-lg transform transition active:scale-95 bg-green-600 text-white hover:bg-green-500">
+                <i data-lucide="play" class="fill-current ml-1 w-6 h-6"></i>
+            </button>
+
+            <button id="btn-record" class="w-16 h-16 rounded-full flex items-center justify-center border-4 transform transition active:scale-95 shadow-lg bg-gray-700 border-gray-600 hover:border-red-500 group">
+                <div id="record-dot" class="w-6 h-6 rounded-full bg-red-500 group-hover:scale-110 transition"></div>
+            </button>
+            
+            <div id="status-text" class="absolute right-4 text-[10px] md:text-xs text-gray-500 font-mono hidden sm:block" data-i18n="status_ready">
+                PRET
+            </div>
+        </div>
+    </div>
+
+    <!-- LYRICS MODAL -->
+    <div id="lyrics-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gray-800 rounded-lg shadow-2xl w-full max-w-2xl border border-gray-700 flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2"><i data-lucide="align-left"></i> <span data-i18n="lyrics_editor_title">Paroles</span></h3>
+                <button id="btn-close-lyrics" class="text-gray-400 hover:text-white p-2"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-4 flex-1 flex flex-col gap-2">
+                <p class="text-xs text-gray-400 bg-gray-900 p-2 rounded" data-i18n="lyrics_instructions">
+                    Séparez: | ou Entrée.
+                </p>
+                <textarea id="lyrics-input" class="w-full flex-1 bg-gray-900 border border-gray-700 rounded p-4 text-white font-mono text-sm focus:outline-none focus:border-blue-500 resize-none h-64 text-base" placeholder="..."></textarea>
+            </div>
+            <div class="p-4 border-t border-gray-700 flex justify-end">
+                <button id="btn-save-lyrics" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded font-bold" data-i18n="apply_btn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILENAME MODAL -->
+    <div id="filename-modal" class="fixed inset-0 bg-black/80 z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-gray-800 rounded-lg shadow-2xl w-full max-w-sm border border-gray-700 p-4">
+            <h3 class="text-lg font-bold text-white mb-4" id="filename-title">Nom du fichier</h3>
+            <input type="text" id="filename-input" class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white focus:outline-none focus:border-blue-500 mb-4" value="projet_rhay">
+            <div class="flex justify-end gap-2">
+                <button id="btn-cancel-filename" class="text-gray-400 hover:text-white px-3 py-1" data-i18n="cancel_btn">Annuler</button>
+                <button id="btn-confirm-filename" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded font-bold" data-i18n="save_btn">Sauvegarder</button>
+            </div>
+        </div>
+    </div>
+    
+    <input type="file" id="file-import" accept="audio/*" class="hidden">
+    <input type="file" id="project-import" accept=".rhay,.json" class="hidden">
+
+    <script>
+        // --- AUTH & ACTIVATION LOGIC ---
+        const app = {
+            state: {
+                deviceId: null,
+                isActivated: false
+            },
+
+            init() {
+                // 1. Génération ID Appareil
+                let dId = localStorage.getItem('rhay_studio_id');
+                if (!dId || !dId.includes('-')) {
+                    const p1 = Math.random().toString(36).substring(2, 6).toUpperCase().padEnd(4, '0').slice(0, 4);
+                    const p2 = Math.random().toString(36).substring(2, 6).toUpperCase().padEnd(4, '0').slice(0, 4);
+                    dId = `${p1}-${p2}`;
+                    localStorage.setItem('rhay_studio_id', dId);
+                }
+                this.state.deviceId = dId;
+                document.getElementById('device-id-display').innerText = dId;
+
+                // 2. Vérification Activation
+                const code = localStorage.getItem('rhay_studio_code');
+                if (code && this.verifyCode(dId, code)) {
+                    this.state.isActivated = true;
+                    this.showApp();
+                } else {
+                    this.showLogin();
+                }
+            },
+
+            verifyCode(id, input) {
+                if (input === 'RHAY-STUDIO-MASTER') return true; // Code secours
+                try {
+                    const cleanInput = input.trim().replace(/[\s]/g, '').toUpperCase();
+                    const cleanInputNoDash = cleanInput.replace(/-/g, '');
+
+                    // Algorithme 
+                    const [p1, p2] = id.split('-');
+                    if(!p1 || !p2) return false;
+                    
+                    const revP1 = p1.split('').reverse().join('');
+                    const revP2 = p2.split('').reverse().join('');
+                    
+                    // Code = 0M + Inv(P2) + A9-0D + Inv(P1) + A6
+                    const expectedStrict = `0M${revP2}A9-0D${revP1}A6`;
+                    const expectedNoDash = expectedStrict.replace(/-/g, '');
+                    
+                    return (cleanInput === expectedStrict) || (cleanInputNoDash === expectedNoDash);
+                } catch(e) { return false; }
+            },
+
+            login() {
+                const input = document.getElementById('activation-code').value;
+                if (this.verifyCode(this.state.deviceId, input)) {
+                    localStorage.setItem('rhay_studio_code', input);
+                    this.state.isActivated = true;
+                    this.showApp();
+                } else {
+                    alert("Code incorrect / Kaody diso.");
+                }
+            },
+
+            logout() {
+                if(confirm("Verrouiller le studio ? / Hidiana ?")) {
+                    localStorage.removeItem('rhay_studio_code');
+                    location.reload();
+                }
+            },
+
+            showApp() {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-content').style.display = 'flex';
+                initState(); // Démarrage du studio
+            },
+
+            showLogin() {
+                document.getElementById('login-screen').style.display = 'flex';
+                document.getElementById('app-content').style.display = 'none';
+            }
+        };
+
+        // --- CONFIGURATION ---
+        const TRACK_COUNT = 5;
+        let SAMPLE_RATE = null; 
+        const TOTAL_DURATION = 600; 
+        const TRACK_COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6'];
+
+        // --- TRANSLATIONS ---
+        const TRANSLATIONS = {
+            fr: {
+                lyrics_btn: "Paroles",
+                export: "Export",
+                lyrics_header: "Paroles",
+                tracks_header: "Pistes",
+                start_btn: "Démarrer",
+                auto_return: "Retour",
+                show_lyrics: "Paroles",
+                status_ready: "PRET",
+                status_playing: "LECTURE",
+                status_recording: "REC...",
+                lyrics_editor_title: "Éditeur",
+                lyrics_instructions: "Utilisez | ou Entrée pour séparer les mesures.",
+                apply_btn: "Appliquer",
+                track_default_name: "Piste",
+                import_tooltip: "Importer Audio",
+                err_micro: "Erreur micro : ",
+                err_codec: "Format non supporté.",
+                err_decode: "Erreur décodage.",
+                alert_arm: "Activez une piste (bouton rond) !",
+                alert_cut_pos: "Placez le curseur sur le clip.",
+                nothing_export: "Rien à exporter.",
+                filename_prompt: "Nom du fichier :",
+                placeholder_lyrics: "Intro... | Couplet...",
+                save_tooltip: "Sauvegarder",
+                open_tooltip: "Ouvrir",
+                project_name_prompt: "Nom du projet :",
+                save_success: "Sauvegardé ! Vérifiez Téléchargements.",
+                export_success: "Exporté ! Vérifiez Téléchargements.",
+                save_btn: "Sauvegarder",
+                cancel_btn: "Annuler"
+            },
+            mg: {
+                lyrics_btn: "Tononkira",
+                export: "Avoaka",
+                lyrics_header: "Tononkira",
+                tracks_header: "Pistes",
+                start_btn: "Alefa",
+                auto_return: "Miverina",
+                show_lyrics: "Tononkira",
+                status_ready: "VONA",
+                status_playing: "MANDEHA",
+                status_recording: "MANDRAKITRA...",
+                lyrics_editor_title: "Tononkira",
+                lyrics_instructions: "Saraho amin'ny | na Entrée.",
+                apply_btn: "Eka",
+                track_default_name: "Piste",
+                import_tooltip: "Hampiditra",
+                err_micro: "Olana Micro : ",
+                err_codec: "Tsy mety io feo io.",
+                err_decode: "Tsy mety vakiana.",
+                alert_arm: "Safidio ny piste aloha !",
+                alert_cut_pos: "Apetraho eo amin'ny clip ny kosoa.",
+                nothing_export: "Tsy misy.",
+                filename_prompt: "Anarana :",
+                placeholder_lyrics: "Fampidirana... | Andininy...",
+                save_tooltip: "Tehirizo",
+                open_tooltip: "Sokafy",
+                project_name_prompt: "Anarana :",
+                save_success: "Voatahiry ! Jereo ny Downloads.",
+                export_success: "Voavoaka ! Jereo ny Downloads.",
+                save_btn: "Tehirizo",
+                cancel_btn: "Aoka ihany"
+            }
+        };
+
+        let currentLang = 'fr';
+
+        function t(key) { return TRANSLATIONS[currentLang][key] || key; }
+
+        function updateTexts() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if(TRANSLATIONS[currentLang][key]) {
+                    el.innerHTML = TRANSLATIONS[currentLang][key];
+                }
+            });
+            const lyricsInput = document.getElementById('lyrics-input');
+            if(lyricsInput) lyricsInput.placeholder = t('placeholder_lyrics');
+            
+            document.getElementById('btn-save-project').title = t('save_tooltip');
+            document.getElementById('btn-load-project').title = t('open_tooltip');
+            document.getElementById('btn-export').title = t('export');
+
+            tracks.forEach((track, i) => {
+                const defaultNameFr = TRANSLATIONS['fr'].track_default_name + " " + (i+1);
+                const defaultNameMg = TRANSLATIONS['mg'].track_default_name + " " + (i+1);
+                if(track.name === defaultNameFr || track.name === defaultNameMg) {
+                    track.name = t('track_default_name') + " " + (i+1);
+                }
+            });
+            renderTrackControls();
+            updateTransportUI();
+            document.getElementById('btn-lang').innerText = currentLang === 'fr' ? 'MG' : 'FR';
+        }
+
+        // --- CUSTOM MODAL PROMPT ---
+        function askFilename(defaultName, titleKey) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('filename-modal');
+                const input = document.getElementById('filename-input');
+                const title = document.getElementById('filename-title');
+                const btnConfirm = document.getElementById('btn-confirm-filename');
+                const btnCancel = document.getElementById('btn-cancel-filename');
+
+                title.innerText = t(titleKey);
+                input.value = defaultName;
+                modal.classList.remove('hidden');
+                input.focus();
+
+                const cleanup = () => {
+                    modal.classList.add('hidden');
+                    btnConfirm.onclick = null;
+                    btnCancel.onclick = null;
+                };
+
+                btnConfirm.onclick = () => {
+                    const name = input.value.trim() || defaultName;
+                    cleanup();
+                    resolve(name);
+                };
+
+                btnCancel.onclick = () => {
+                    cleanup();
+                    resolve(null);
+                };
+            });
+        }
+
+        // --- STATE & AUDIO ---
+        let audioCtx = null;
+        let masterGain = null;
+        let micStream = null;
+        let analyser = null;
+        
+        let pixelsPerSecond = 50; 
+        let tracks = [];
+        let isPlaying = false;
+        let isRecording = false;
+        let currentTime = 0;
+        let playbackStartPosition = 0; 
+        
+        let selectedClip = null; 
+        let bpm = 120;
+        let isMetronomeOn = false;
+        let nextNoteTime = 0.0;
+        let lyricsChunks = []; 
+        let showLyrics = false;
+
+        let startTimeRef = 0;
+        let startOffsetRef = 0;
+        let requestAnimId = null;
+
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let activeSources = [];
+        let currentRecordingClip = null; 
+        let importTargetTrackId = null; 
+
+        // --- CORE FUNCTIONS ---
+
+        function togglePlay() {
+            if(isPlaying || isRecording) stop();
+            else play();
+        }
+
+        function toggleRecord() {
+            if(isRecording) stop();
+            else {
+                const armedTrack = tracks.find(t => t.isArmed);
+                if (!armedTrack) { alert(t('alert_arm')); return; }
+                startRecordingLogic(armedTrack.id);
+            }
+        }
+
+        function toggleArm(id) {
+            tracks.forEach(t => {
+                if (t.id === id) t.isArmed = !t.isArmed;
+                else t.isArmed = false; 
+            });
+            renderTrackControls();
+        }
+
+        function toggleMute(id) {
+            const t = tracks.find(x => x.id === id);
+            t.isMuted = !t.isMuted;
+            renderTrackControls();
+        }
+
+        function toggleSolo(id) {
+            const t = tracks.find(x => x.id === id);
+            t.isSolo = !t.isSolo;
+            renderTrackControls();
+        }
+
+        function updateVolume(id, val) {
+            const t = tracks.find(x => x.id === id);
+            t.volume = val;
+        }
+
+        // --- INITIALIZATION ---
+        function initState() {
+            // Initialisation uniquement si vide pour éviter reset au login
+            if(tracks.length > 0) return;
+
+            for (let i = 0; i < TRACK_COUNT; i++) {
+                tracks.push({
+                    id: i,
+                    name: `Piste ${i + 1}`,
+                    color: TRACK_COLORS[i],
+                    volume: 0.8,
+                    isMuted: false,
+                    isSolo: false,
+                    isArmed: false,
+                    clips: [] 
+                });
+            }
+            updateTexts();
+            renderUI();
+            updateLyricsDisplay(); 
+            lucide.createIcons();
+        }
+
+        async function initAudio() {
+            const debugEl = document.getElementById('debug-msg');
+            if (audioCtx && micStream) return;
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert("Erreur: API Audio non supportée (HTTPS requis).");
+                return;
+            }
+            try {
+                if(!audioCtx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    audioCtx = new AudioContext(); 
+                    SAMPLE_RATE = audioCtx.sampleRate;
+                    masterGain = audioCtx.createGain();
+                    masterGain.connect(audioCtx.destination);
+                }
+                if(audioCtx.state === 'suspended') {
+                    await audioCtx.resume();
+                }
+                const constraints = { audio: true }; 
+                if (!micStream) {
+                    micStream = await navigator.mediaDevices.getUserMedia(constraints);
+                }
+                document.getElementById('init-overlay').classList.add('hidden');
+            } catch (err) {
+                if(audioCtx) {
+                    try { await audioCtx.close(); } catch(e){}
+                    audioCtx = null;
+                }
+                micStream = null;
+                let msg = err.message;
+                if(err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    msg = "Permission refusée. Paramètres Android > Apps > RHAY > Permissions.";
+                }
+                alert(t('err_micro') + " " + msg);
+                debugEl.innerText = err.name + ": " + err.message;
+                debugEl.classList.remove('hidden');
+            }
+        }
+
+        // --- DOM RENDERERS ---
+        function renderUI() {
+            renderTrackControls();
+            renderTimeline();
+        }
+        function renderTimeline() {
+            renderTimelineTracks();
+            setupRuler();
+            updateLyricsDisplay();
+            updatePlayhead();
+            if(selectedClip) highlightSelectedClip();
+            updateEditToolsState();
+        }
+        function renderTrackControls() {
+            const container = document.getElementById('track-list');
+            container.innerHTML = '';
+            tracks.forEach(track => {
+                const el = document.createElement('div');
+                el.className = "h-24 border-b border-gray-700 p-1 md:p-2 flex flex-col justify-between relative bg-gray-800/50";
+                el.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-xs truncate w-16 md:w-20" style="color: ${track.color}">${track.name}</span>
+                        <div class="flex gap-1">
+                            <button onclick="triggerImport(${track.id})" class="p-1 hover:bg-gray-600 rounded text-gray-400" title="${t('import_tooltip')}"><i data-lucide="upload" width="12" height="12"></i></button>
+                            <div class="w-2 h-2 md:w-3 md:h-3 rounded-full mt-1" style="background-color: ${track.color}"></div>
+                        </div>
+                    </div>
+                    <div class="flex gap-1 mt-1">
+                        <button onclick="toggleMute(${track.id})" class="p-1 rounded text-[10px] flex-1 ${track.isMuted ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'}">M</button>
+                        <button onclick="toggleSolo(${track.id})" class="p-1 rounded text-[10px] flex-1 ${track.isSolo ? 'bg-yellow-600 text-white' : 'bg-gray-700 text-gray-400'}">S</button>
+                        <button onclick="toggleArm(${track.id})" class="p-1 rounded text-[10px] flex-1 flex justify-center items-center ${track.isArmed ? 'bg-red-600 text-white animate-pulse' : 'bg-gray-700 text-gray-400'}"><div class="w-2 h-2 rounded-full bg-current"></div></button>
+                    </div>
+                    <div class="flex items-center gap-1 mt-1 md:mt-2">
+                        <i data-lucide="${track.isMuted ? 'volume-x' : 'volume-2'}" width="12" class="text-gray-400"></i>
+                        <input type="range" min="0" max="1" step="0.01" value="${track.volume}" oninput="updateVolume(${track.id}, this.value)" class="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div id="rec-indicator-${track.id}" class="${track.isArmed ? '' : 'hidden'} absolute top-0 right-0 w-1 h-full bg-red-500 animate-pulse"></div>
+                `;
+                container.appendChild(el);
+            });
+            lucide.createIcons();
+        }
+        function renderTimelineTracks() {
+            const container = document.getElementById('timeline-tracks');
+            container.innerHTML = '';
+            tracks.forEach(track => {
+                const lane = document.createElement('div');
+                lane.className = "h-24 border-b border-gray-800 relative bg-gray-900/50 w-full";
+                lane.id = `timeline-lane-${track.id}`;
+                track.clips.forEach((clip, idx) => {
+                    const clipEl = document.createElement('div');
+                    clipEl.className = "absolute top-1 bottom-1 rounded-md overflow-hidden border border-opacity-50 flex items-center justify-center cursor-pointer active:brightness-125";
+                    clipEl.style.left = `${clip.start * pixelsPerSecond}px`;
+                    clipEl.style.width = `${clip.duration * pixelsPerSecond}px`;
+                    clipEl.style.backgroundColor = `${track.color}40`;
+                    clipEl.style.borderColor = track.color;
+                    clipEl.dataset.trackId = track.id;
+                    clipEl.dataset.clipIndex = idx;
+                    clipEl.onclick = (e) => { if(isRecording) return; e.stopPropagation(); selectClip(track.id, idx); };
+                    clipEl.innerHTML = `<div class="w-full h-[1px]" style="background-color: ${track.color}"></div><span class="text-[9px] text-white absolute left-1 top-0 opacity-80 truncate px-1 w-full text-center select-none">${clip.name || 'Clip'}</span>`;
+                    lane.appendChild(clipEl);
+                });
+                container.appendChild(lane);
+            });
+        }
+        function setupRuler() {
+            const ruler = document.getElementById('ruler');
+            const content = document.getElementById('timeline-content');
+            const width = TOTAL_DURATION * pixelsPerSecond;
+            content.style.width = `${width}px`;
+            ruler.innerHTML = '';
+            let step = 1;
+            if(pixelsPerSecond < 20) step = 10;
+            else if(pixelsPerSecond < 40) step = 5;
+            for(let i=0; i<TOTAL_DURATION; i+=step) {
+                const mk = document.createElement('div');
+                mk.className = "absolute top-0 bottom-0 border-l border-gray-600 text-[9px] text-gray-500 pl-1 select-none pointer-events-none";
+                mk.style.left = `${i * pixelsPerSecond}px`;
+                mk.innerText = `${i}`;
+                ruler.appendChild(mk);
+            }
+            const grid = document.getElementById('grid-bg');
+            grid.style.backgroundImage = 'linear-gradient(to right, #444 1px, transparent 1px)';
+            grid.style.backgroundSize = `${pixelsPerSecond}px 100%`; 
+        }
+        function selectClip(trackId, clipIndex) {
+            selectedClip = { trackId, clipIndex };
+            renderTimelineTracks(); 
+            highlightSelectedClip();
+            updateEditToolsState();
+        }
+        function highlightSelectedClip() {
+            if(!selectedClip) return;
+            const selector = `div[data-track-id="${selectedClip.trackId}"][data-clip-index="${selectedClip.clipIndex}"]`;
+            const el = document.querySelector(selector);
+            if(el) el.classList.add('clip-selected');
+        }
+        function updateEditToolsState() {
+            const btnSplit = document.getElementById('btn-split');
+            const btnDelete = document.getElementById('btn-delete');
+            const hasSelection = !!selectedClip;
+            btnSplit.disabled = !hasSelection;
+            btnDelete.disabled = !hasSelection;
+        }
+        
+        // ... (Listeners for zoom, split, delete etc. unchanged from previous working block) ...
+        document.getElementById('timeline-scroll-area').addEventListener('click', (e) => {
+            if(e.target.id === 'timeline-content' || e.target.id === 'grid-bg' || e.target.id.startsWith('timeline-lane')) {
+                if(isRecording) return; 
+                selectedClip = null;
+                renderTimelineTracks();
+                updateEditToolsState();
+            }
+        });
+        document.getElementById('btn-zoom-in').addEventListener('click', () => {
+            if(isRecording) return; 
+            if(pixelsPerSecond < 200) { pixelsPerSecond += 10; renderTimeline(); }
+        });
+        document.getElementById('btn-zoom-out').addEventListener('click', () => {
+            if(isRecording) return; 
+            if(pixelsPerSecond > 10) { pixelsPerSecond -= 10; renderTimeline(); }
+        });
+        document.getElementById('btn-split').addEventListener('click', () => {
+            if(!selectedClip || !audioCtx) return;
+            const track = tracks.find(t => t.id === selectedClip.trackId);
+            const clip = track.clips[selectedClip.clipIndex];
+            if (currentTime <= clip.start || currentTime >= clip.start + clip.duration) {
+                alert(t('alert_cut_pos'));
+                return;
+            }
+            const splitPoint = currentTime - clip.start;
+            const originalBuffer = clip.buffer;
+            const sliceBuffer = (buffer, begin, end) => {
+                const rate = buffer.sampleRate;
+                const frameCount = Math.floor((end - begin) * rate);
+                if(frameCount <= 0) return null;
+                const newBuffer = audioCtx.createBuffer(buffer.numberOfChannels, frameCount, rate);
+                const offset = Math.floor(begin * rate);
+                for(let i=0; i<buffer.numberOfChannels; i++) {
+                    newBuffer.copyToChannel(buffer.getChannelData(i).subarray(offset, offset + frameCount), i);
+                }
+                return newBuffer;
+            };
+            const buffer1 = sliceBuffer(originalBuffer, 0, splitPoint);
+            const buffer2 = sliceBuffer(originalBuffer, splitPoint, clip.duration);
+            if(!buffer1 || !buffer2) return;
+            track.clips.splice(selectedClip.clipIndex, 1);
+            track.clips.push({ start: clip.start, buffer: buffer1, duration: buffer1.duration, name: clip.name + " (1)" });
+            track.clips.push({ start: currentTime, buffer: buffer2, duration: buffer2.duration, name: clip.name + " (2)" });
+            track.clips.sort((a,b) => a.start - b.start);
+            selectedClip = null;
+            renderTimeline();
+        });
+        document.getElementById('btn-delete').addEventListener('click', () => {
+            if(!selectedClip) return;
+            const track = tracks.find(t => t.id === selectedClip.trackId);
+            track.clips.splice(selectedClip.clipIndex, 1);
+            selectedClip = null;
+            renderTimeline();
+        });
+
+        // --- LYRICS LOGIC ---
+        function getPixelsPerBar() {
+            const beatsPerSec = bpm / 60;
+            const secPerBeat = 1 / beatsPerSec;
+            const secPerBar = secPerBeat * 4; 
+            return secPerBar * pixelsPerSecond;
+        }
+        function updateLyricsDisplay() {
+            const lane = document.getElementById('lyrics-lane');
+            const sidebarHeader = document.getElementById('lyrics-sidebar-header');
+            if(!showLyrics) { lane.classList.add('hidden'); sidebarHeader.classList.add('hidden'); return; }
+            lane.classList.remove('hidden'); sidebarHeader.classList.remove('hidden'); lane.innerHTML = '';
+            const pixelsPerBar = getPixelsPerBar();
+            lane.style.backgroundSize = `${pixelsPerBar}px 100%`;
+            lyricsChunks.forEach((text, index) => {
+                if(!text || text.trim() === "") return; 
+                const chunkEl = document.createElement('div');
+                chunkEl.className = "lyrics-chunk absolute top-0 bottom-0 flex items-center px-2 text-sm font-mono text-yellow-300 border-l border-gray-500/50 whitespace-nowrap overflow-hidden";
+                chunkEl.style.left = `${index * pixelsPerBar}px`;
+                chunkEl.style.width = `${pixelsPerBar}px`;
+                chunkEl.innerText = text;
+                chunkEl.dataset.index = index;
+                lane.appendChild(chunkEl);
+            });
+        }
+        const lyricsLane = document.getElementById('lyrics-lane');
+        lyricsLane.addEventListener('dblclick', function(e) {
+            const laneRect = document.getElementById('timeline-content').getBoundingClientRect();
+            const clickX = e.clientX - laneRect.left;
+            const pixelsPerBar = getPixelsPerBar();
+            const barIndex = Math.floor(clickX / pixelsPerBar);
+            while(lyricsChunks.length <= barIndex) lyricsChunks.push("");
+            const currentValue = lyricsChunks[barIndex] || "";
+            const existingInput = document.querySelector('.lyrics-input-inline');
+            if(existingInput) existingInput.blur(); 
+            let targetEl = document.querySelector(`.lyrics-chunk[data-index="${barIndex}"]`);
+            if(!targetEl) {
+                targetEl = document.createElement('div');
+                targetEl.className = "lyrics-chunk absolute top-0 bottom-0 flex items-center px-2 border-l border-gray-500/50";
+                targetEl.style.left = `${barIndex * pixelsPerBar}px`;
+                targetEl.style.width = `${pixelsPerBar}px`;
+                targetEl.dataset.index = barIndex;
+                lyricsLane.appendChild(targetEl);
+            }
+            targetEl.innerHTML = '';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentValue;
+            input.className = 'lyrics-input-inline';
+            input.placeholder = '...';
+            targetEl.appendChild(input);
+            input.focus();
+            const save = () => {
+                const newVal = input.value;
+                lyricsChunks[barIndex] = newVal;
+                document.getElementById('lyrics-input').value = lyricsChunks.join(' | ');
+                updateLyricsDisplay();
+            };
+            input.addEventListener('blur', save);
+            input.addEventListener('keydown', (evt) => { if(evt.key === 'Enter') input.blur(); });
+        });
+
+        // --- AUDIO ENGINE CORE ---
+        function play() {
+            if(!audioCtx) return;
+            stopSources();
+            startTimeRef = audioCtx.currentTime;
+            startOffsetRef = currentTime;
+            playbackStartPosition = currentTime; 
+            nextNoteTime = audioCtx.currentTime; 
+            tracks.forEach(track => {
+                if (track.isMuted) return;
+                const soloExists = tracks.some(t => t.isSolo);
+                if (soloExists && !track.isSolo) return;
+                track.clips.forEach(clip => {
+                    const clipEnd = clip.start + clip.duration;
+                    if (currentTime < clipEnd) {
+                        const source = audioCtx.createBufferSource();
+                        source.buffer = clip.buffer;
+                        const gainNode = audioCtx.createGain();
+                        gainNode.gain.value = track.volume;
+                        source.connect(gainNode);
+                        gainNode.connect(masterGain);
+                        let whenToStart = 0; let offsetInClip = 0; 
+                        if (currentTime > clip.start) { whenToStart = 0; offsetInClip = currentTime - clip.start; }
+                        else { whenToStart = clip.start - currentTime; offsetInClip = 0; }
+                        source.start(audioCtx.currentTime + whenToStart, offsetInClip);
+                        activeSources.push(source);
+                    }
+                });
+            });
+            isPlaying = true;
+            updateTransportUI();
+            startAnimationLoop();
+        }
+        function stop() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+            stopSources();
+            isPlaying = false;
+            isRecording = false;
+            cancelAnimationFrame(requestAnimId);
+            if(currentRecordingClip) {
+                const canvas = document.getElementById(`rec-canvas-${currentRecordingClip.trackId}`);
+                if(canvas) canvas.remove();
+                currentRecordingClip = null;
+            }
+            if(document.getElementById('chk-auto-return').checked) {
+                currentTime = playbackStartPosition;
+                startOffsetRef = playbackStartPosition;
+            }
+            updateTransportUI();
+            updatePlayhead();
+            updateTimeDisplay();
+        }
+        function stopSources() { activeSources.forEach(s => { try{s.stop()}catch(e){} }); activeSources = []; }
+        function scheduleMetronome() {
+            if(!isMetronomeOn || !isPlaying) return;
+            const secondsPerBeat = 60.0 / bpm;
+            const lookahead = 0.1; 
+            while (nextNoteTime < audioCtx.currentTime + lookahead) { playClick(nextNoteTime); nextNoteTime += secondsPerBeat; }
+        }
+        function playClick(time) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(masterGain);
+            osc.frequency.value = 1000; gain.gain.value = 0.5; 
+            osc.start(time);
+            osc.stop(time + 0.05);
+            activeSources.push(osc);
+        }
+        async function startRecordingLogic(trackId) {
+            if (!micStream || !audioCtx) return;
+            if (audioCtx.state === 'suspended') await audioCtx.resume();
+            play();
+            isRecording = true;
+            updateTransportUI();
+            const input = audioCtx.createMediaStreamSource(micStream);
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            input.connect(analyser);
+            let options = {};
+            if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) options = { mimeType: 'audio/webm;codecs=opus' };
+            else if (MediaRecorder.isTypeSupported('audio/mp4')) options = { mimeType: 'audio/mp4' };
+            try { mediaRecorder = new MediaRecorder(micStream, options); }
+            catch (e) { try { mediaRecorder = new MediaRecorder(micStream); } catch(e2) { alert(t('err_codec') + " " + e2.message); return; } }
+            recordedChunks = [];
+            const recordStartTime = currentTime;
+            const lane = document.getElementById(`timeline-lane-${trackId}`);
+            const canvas = document.createElement('canvas');
+            canvas.id = `rec-canvas-${trackId}`;
+            canvas.className = "absolute top-1 bottom-1 rounded-r-md border-r-2 border-red-500 bg-red-900/30 z-20";
+            canvas.height = 90;
+            canvas.style.left = `${recordStartTime * pixelsPerSecond}px`;
+            lane.appendChild(canvas);
+            currentRecordingClip = { trackId, start: recordStartTime, canvas: canvas, ctx: canvas.getContext('2d'), data: [] };
+            mediaRecorder.ondataavailable = (e) => { if(e.data.size > 0) recordedChunks.push(e.data); };
+            mediaRecorder.onstop = async () => {
+                let blobType = mediaRecorder.mimeType || 'audio/webm';
+                if (!blobType && recordedChunks.length > 0) blobType = recordedChunks[0].type;
+                const blob = new Blob(recordedChunks, { type: blobType });
+                try {
+                    const arrayBuffer = await blob.arrayBuffer();
+                    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                    const track = tracks.find(t => t.id === trackId);
+                    track.clips.push({ start: recordStartTime, buffer: audioBuffer, duration: audioBuffer.duration, name: "Rec " + new Date().toLocaleTimeString() });
+                    renderTimeline();
+                } catch (decodeErr) { console.error("Decode error:", decodeErr); alert(t('err_decode') + " Type: " + blobType); }
+            };
+            mediaRecorder.start(50);
+        }
+        function startAnimationLoop() {
+            if(requestAnimId) cancelAnimationFrame(requestAnimId);
+            function loop() {
+                if(!audioCtx) return;
+                const now = audioCtx.currentTime;
+                const exactTime = (now - startTimeRef) + startOffsetRef;
+                currentTime = exactTime;
+                updatePlayhead();
+                updateTimeDisplay();
+                if(isMetronomeOn) scheduleMetronome();
+                if(isRecording && currentRecordingClip && analyser) drawLiveWaveform();
+                if(isPlaying || isRecording) requestAnimId = requestAnimationFrame(loop);
+            }
+            loop();
+        }
+        function drawLiveWaveform() {
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteTimeDomainData(dataArray);
+            let sum = 0;
+            for(let i = 0; i < dataArray.length; i++) sum += Math.abs( (dataArray[i] - 128) / 128 );
+            const amp = sum / dataArray.length;
+            const clip = currentRecordingClip;
+            clip.data.push(amp);
+            const durationSoFar = currentTime - clip.start;
+            const width = durationSoFar * pixelsPerSecond;
+            clip.canvas.style.width = `${width}px`;
+            clip.canvas.width = width;
+            const ctx = clip.ctx;
+            const h = clip.canvas.height;
+            const w = clip.canvas.width;
+            ctx.clearRect(0,0,w,h);
+            ctx.beginPath();
+            ctx.strokeStyle = "#ef4444";
+            ctx.lineWidth = 2;
+            const step = w / clip.data.length;
+            ctx.moveTo(0, h/2);
+            for(let i=0; i<clip.data.length; i++) {
+                const height = clip.data[i] * h; 
+                ctx.lineTo(i * step, (h/2) - (height/2));
+                ctx.lineTo(i * step, (h/2) + (height/2));
+            }
+            ctx.stroke();
+        }
+        function updatePlayhead() {
+            const playhead = document.getElementById('playhead');
+            const pos = currentTime * pixelsPerSecond;
+            playhead.style.left = `${pos}px`;
+            const scrollArea = document.getElementById('timeline-scroll-area');
+            const viewWidth = scrollArea.clientWidth;
+            const scrollLeft = scrollArea.scrollLeft;
+            if (pos > scrollLeft + viewWidth - 50) scrollArea.scrollLeft = pos - 100;
+        }
+        function updateTimeDisplay() {
+            const sec = Math.floor(currentTime % 60);
+            const min = Math.floor(currentTime / 60);
+            const ms = Math.floor((currentTime % 1) * 10);
+            const txt = `${min}:${sec < 10 ? '0'+sec : sec}.${ms}`;
+            document.getElementById('time-display').innerText = txt;
+        }
+        function triggerImport(trackId) {
+            importTargetTrackId = trackId;
+            document.getElementById('file-import').click();
+        }
+        document.getElementById('file-import').addEventListener('change', function(e) {
+            if(!audioCtx) initAudio(); 
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async (evt) => {
+                const arrayBuffer = evt.target.result;
+                try {
+                    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                    const track = tracks.find(t => t.id === importTargetTrackId);
+                    track.clips.push({ start: 0, buffer: audioBuffer, duration: audioBuffer.duration, name: file.name });
+                    renderTimeline();
+                } catch(err) { alert(t('err_decode') + err); }
+            };
+            reader.readAsArrayBuffer(file);
+            this.value = null;
+        });
+
+        // --- EXPORT/SAVE HELPERS ---
+        function bufferToWave(abuffer, len) {
+            let numOfChan = abuffer.numberOfChannels,
+            length = len * numOfChan * 2 + 44,
+            buffer = new ArrayBuffer(length),
+            view = new DataView(buffer),
+            channels = [], i, sample, offset = 0, pos = 0;
+            setUint32(0x46464952); setUint32(length - 8); setUint32(0x45564157); setUint32(0x20746d66); setUint32(16); setUint16(1); setUint16(numOfChan); setUint32(abuffer.sampleRate); setUint32(abuffer.sampleRate * 2 * numOfChan); setUint16(numOfChan * 2); setUint16(16); setUint32(0x61746164); setUint32(length - pos - 4);
+            for(i = 0; i < abuffer.numberOfChannels; i++) channels.push(abuffer.getChannelData(i));
+            while(pos < length) {
+                for(i = 0; i < numOfChan; i++) {
+                    sample = Math.max(-1, Math.min(1, channels[i][offset]));
+                    sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767)|0;
+                    view.setInt16(pos, sample, true); pos += 2;
+                }
+                offset++;
+            }
+            return new Blob([buffer], {type: "audio/wav"});
+            function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
+            function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
+        }
+        function blobToBase64(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        // --- UPDATED EXPORT/SAVE LOGIC ---
+        async function saveProject() {
+            if(isRecording) return;
+            if(!audioCtx) return;
+            
+            const filename = await askFilename("projet_rhay", 'project_name_prompt');
+            if(!filename) return;
+            const safeFilename = filename.endsWith('.rhay') ? filename : filename + ".rhay";
+
+            const projectData = { version: "1.0", bpm: bpm, lyricsChunks: lyricsChunks, tracks: [] };
+            for (const t of tracks) {
+                const serializedClips = [];
+                for (const c of t.clips) {
+                    const wavBlob = bufferToWave(c.buffer, c.buffer.length);
+                    const base64Data = await blobToBase64(wavBlob);
+                    serializedClips.push({ start: c.start, duration: c.duration, name: c.name, data: base64Data });
+                }
+                projectData.tracks.push({ id: t.id, name: t.name, color: t.color, volume: t.volume, isMuted: t.isMuted, isSolo: t.isSolo, clips: serializedClips });
+            }
+            
+            const jsonStr = JSON.stringify(projectData);
+            const blob = new Blob([jsonStr], {type: "application/json"});
+
+            if ('showSaveFilePicker' in window) {
+                try {
+                    const handle = await window.showSaveFilePicker({ suggestedName: safeFilename, types: [{ description: 'Projet RHAY', accept: {'application/json': ['.rhay']}, }], });
+                    const writable = await handle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();
+                    return; 
+                } catch (err) { if (err.name !== 'AbortError') console.log("Fallback save..."); else return; }
+            }
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = safeFilename;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { document.body.removeChild(a); window.URL.revokeObjectURL(url); alert(t('save_success')); }, 3000); // 3s delay for Android
+        }
+
+        function triggerLoadProject() {
+            if(isRecording) return;
+            document.getElementById('project-import').click();
+        }
+        document.getElementById('project-import').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async (evt) => {
+                try { const projectData = JSON.parse(evt.target.result); await restoreProject(projectData); } catch(err) { alert("Erreur fichier projet: " + err); }
+            };
+            reader.readAsText(file);
+            this.value = null;
+        });
+        async function restoreProject(data) {
+            if(!audioCtx) { const AudioContext = window.AudioContext || window.webkitAudioContext; audioCtx = new AudioContext({ sampleRate: SAMPLE_RATE }); masterGain = audioCtx.createGain(); masterGain.connect(audioCtx.destination); }
+            bpm = data.bpm || 120; document.getElementById('bpm-input').value = bpm; lyricsChunks = data.lyricsChunks || []; tracks = []; 
+            for(const tData of data.tracks) {
+                const newTrack = { id: tData.id, name: tData.name, color: tData.color, volume: tData.volume, isMuted: tData.isMuted, isSolo: tData.isSolo, isArmed: false, clips: [] };
+                for(const cData of tData.clips) {
+                    const res = await fetch(cData.data);
+                    const arrayBuff = await res.arrayBuffer();
+                    const audioBuff = await audioCtx.decodeAudioData(arrayBuff);
+                    newTrack.clips.push({ start: cData.start, duration: cData.duration, name: cData.name, buffer: audioBuff });
+                }
+                tracks.push(newTrack);
+            }
+            updateLyricsDisplay(); renderUI(); alert("Projet chargé !");
+        }
+
+        async function exportToWav() {
+            if(isRecording) return;
+            if(!audioCtx) return;
+            let maxDuration = 0; tracks.forEach(t => { t.clips.forEach(c => { if(c.start + c.duration > maxDuration) maxDuration = c.start + c.duration; }); });
+            if(maxDuration === 0) { alert(t('nothing_export')); return; }
+            
+            const filename = await askFilename("rhay_studio_mix", 'filename_prompt');
+            if(!filename) return;
+            const safeFilename = filename.endsWith('.wav') ? filename : filename + ".wav";
+            
+            const offlineCtx = new OfflineAudioContext(2, maxDuration * SAMPLE_RATE, SAMPLE_RATE);
+            tracks.forEach(track => {
+                if(track.isMuted) return;
+                track.clips.forEach(clip => {
+                    const source = offlineCtx.createBufferSource();
+                    source.buffer = clip.buffer;
+                    const gain = offlineCtx.createGain();
+                    gain.gain.value = track.volume;
+                    source.connect(gain);
+                    gain.connect(offlineCtx.destination);
+                    source.start(clip.start);
+                });
+            });
+            const renderedBuffer = await offlineCtx.startRendering();
+            const wavBlob = bufferToWave(renderedBuffer, renderedBuffer.length);
+
+            if ('showSaveFilePicker' in window) {
+                try {
+                    const handle = await window.showSaveFilePicker({ suggestedName: safeFilename, types: [{ description: 'Fichier Audio WAV', accept: {'audio/wav': ['.wav']}, }], });
+                    const writable = await handle.createWritable();
+                    await writable.write(wavBlob);
+                    await writable.close();
+                    return; 
+                } catch (err) { if (err.name !== 'AbortError') console.log("Fallback export..."); else return; }
+            }
+
+            const url = URL.createObjectURL(wavBlob);
+            const link = document.createElement('a');
+            link.style.display = 'none';
+            link.href = url;
+            link.download = safeFilename;
+            document.body.appendChild(link);
+            link.click();
+            setTimeout(() => { document.body.removeChild(link); window.URL.revokeObjectURL(url); alert(t('export_success')); }, 3000);
+        }
+
+        // --- BUTTON BINDINGS ---
+        document.getElementById('btn-lang').addEventListener('click', function() { currentLang = currentLang === 'fr' ? 'mg' : 'fr'; updateTexts(); });
+        document.getElementById('btn-init').addEventListener('click', initAudio);
+        document.getElementById('btn-play').addEventListener('click', togglePlay);
+        document.getElementById('btn-record').addEventListener('click', toggleRecord);
+        document.getElementById('btn-rewind').addEventListener('click', () => { currentTime = 0; startOffsetRef = 0; playbackStartPosition = 0; updatePlayhead(); updateTimeDisplay(); });
+        document.getElementById('btn-export').addEventListener('click', exportToWav);
+        document.getElementById('btn-save-project').addEventListener('click', saveProject);
+        document.getElementById('btn-load-project').addEventListener('click', triggerLoadProject);
+        document.getElementById('bpm-input').addEventListener('change', (e) => { bpm = parseInt(e.target.value); updateLyricsDisplay(); });
+        document.getElementById('btn-metronome').addEventListener('click', function() { isMetronomeOn = !isMetronomeOn; this.className = isMetronomeOn ? "text-green-400 transition" : "text-gray-500 hover:text-white transition"; });
+        
+        // Timeline Click Bindings
+        document.getElementById('timeline-scroll-area').addEventListener('click', (e) => {
+            if(e.target.id === 'timeline-content' || e.target.id === 'grid-bg' || e.target.id.startsWith('timeline-lane')) {
+                if(isRecording) return; 
+                selectedClip = null;
+                renderTimelineTracks();
+                updateEditToolsState();
+            }
+        });
+        document.getElementById('btn-zoom-in').addEventListener('click', () => {
+            if(isRecording) return; 
+            if(pixelsPerSecond < 200) { pixelsPerSecond += 10; renderTimeline(); }
+        });
+        document.getElementById('btn-zoom-out').addEventListener('click', () => {
+            if(isRecording) return; 
+            if(pixelsPerSecond > 10) { pixelsPerSecond -= 10; renderTimeline(); }
+        });
+        document.getElementById('btn-split').addEventListener('click', () => {
+            if(!selectedClip || !audioCtx) return;
+            const track = tracks.find(t => t.id === selectedClip.trackId);
+            const clip = track.clips[selectedClip.clipIndex];
+            if (currentTime <= clip.start || currentTime >= clip.start + clip.duration) {
+                alert(t('alert_cut_pos'));
+                return;
+            }
+            const splitPoint = currentTime - clip.start;
+            const originalBuffer = clip.buffer;
+            const sliceBuffer = (buffer, begin, end) => {
+                const rate = buffer.sampleRate;
+                const frameCount = Math.floor((end - begin) * rate);
+                if(frameCount <= 0) return null;
+                const newBuffer = audioCtx.createBuffer(buffer.numberOfChannels, frameCount, rate);
+                const offset = Math.floor(begin * rate);
+                for(let i=0; i<buffer.numberOfChannels; i++) {
+                    newBuffer.copyToChannel(buffer.getChannelData(i).subarray(offset, offset + frameCount), i);
+                }
+                return newBuffer;
+            };
+            const buffer1 = sliceBuffer(originalBuffer, 0, splitPoint);
+            const buffer2 = sliceBuffer(originalBuffer, splitPoint, clip.duration);
+            if(!buffer1 || !buffer2) return;
+            track.clips.splice(selectedClip.clipIndex, 1);
+            track.clips.push({ start: clip.start, buffer: buffer1, duration: buffer1.duration, name: clip.name + " (1)" });
+            track.clips.push({ start: currentTime, buffer: buffer2, duration: buffer2.duration, name: clip.name + " (2)" });
+            track.clips.sort((a,b) => a.start - b.start);
+            selectedClip = null;
+            renderTimeline();
+        });
+        document.getElementById('btn-delete').addEventListener('click', () => {
+            if(!selectedClip) return;
+            const track = tracks.find(t => t.id === selectedClip.trackId);
+            track.clips.splice(selectedClip.clipIndex, 1);
+            selectedClip = null;
+            renderTimeline();
+        });
+
+        // Lyrics Modal Bindings
+        const lyricsModal = document.getElementById('lyrics-modal');
+        document.getElementById('btn-lyrics-modal').addEventListener('click', () => { lyricsModal.classList.remove('hidden'); });
+        document.getElementById('btn-close-lyrics').addEventListener('click', () => { lyricsModal.classList.add('hidden'); });
+        document.getElementById('btn-save-lyrics').addEventListener('click', () => { const rawVal = document.getElementById('lyrics-input').value; lyricsChunks = rawVal.split('|').map(s => s.trim()); showLyrics = true; document.getElementById('chk-show-lyrics').checked = true; updateLyricsDisplay(); lyricsModal.classList.add('hidden'); });
+        document.getElementById('chk-show-lyrics').addEventListener('change', (e) => { showLyrics = e.target.checked; updateLyricsDisplay(); });
+        document.getElementById('ruler').addEventListener('click', (e) => {
+            if(isRecording) return; 
+            const rect = e.currentTarget.getBoundingClientRect();
+            const container = document.getElementById('timeline-scroll-area');
+            const x = e.clientX - rect.left + container.scrollLeft;
+            const newTime = x / pixelsPerSecond;
+            currentTime = newTime; startOffsetRef = newTime; playbackStartPosition = newTime; 
+            if(isPlaying) { stop(); play(); } else { updatePlayhead(); updateTimeDisplay(); }
+        });
+
+        // Initialize App Login Check
+        app.init();
+    </script>
+</body>
+</html>
