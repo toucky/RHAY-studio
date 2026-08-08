@@ -1,0 +1,28 @@
+name: Bridge RHAY Studio NativeAudio v6
+
+on:
+  push:
+    branches: ['main']
+    paths:
+      - '.github/workflows/bridge-v6.yml'
+
+jobs:
+  bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Télécharger le build privé via URL temporaire
+        env:
+          SIGNED_URL: 'https://release-assets.githubusercontent.com/github-production-release-asset/1314757660/bc64907c-c379-44bf-9d49-cdab3dbf0507?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-08-08T09%3A39%3A02Z&rscd=attachment%3B+filename%3DRhay-Studio-Setup-NativeAudio-v6.exe&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-08-08T08%3A38%3A05Z&ske=2026-08-08T09%3A39%3A02Z&sks=b&skv=2018-11-09&sig=GHGqLuDXddLYl01m2Ks0NrlPSAYFFcorFqWCXSeF740%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc4NjE3OTQ1MSwibmJmIjoxNzg2MTc5MTUxLCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.AElBADud7bYPMhdWdV1fIwyeXtjJmbYP3WCaAxSSEek&response-content-disposition=attachment%3B%20filename%3DRhay-Studio-Setup-NativeAudio-v6.exe&response-content-type=application%2Foctet-stream'
+        run: |
+          set -euo pipefail
+          curl -L --fail --retry 3 "$SIGNED_URL" -o Rhay-Studio-Setup-NativeAudio-v6.exe
+          echo 'eae89cf97e3ec2c76652384e7c01d11a272d60185422fb3517f9b804b3aa1884  Rhay-Studio-Setup-NativeAudio-v6.exe' | sha256sum -c -
+          ls -lh Rhay-Studio-Setup-NativeAudio-v6.exe
+
+      - name: Publier comme artefact temporaire
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rhay-Studio-NativeAudio-v6-EXE
+          path: Rhay-Studio-Setup-NativeAudio-v6.exe
+          compression-level: 0
+          retention-days: 1
