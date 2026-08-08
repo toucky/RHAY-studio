@@ -1,0 +1,27 @@
+name: Chat NativeAudio v4 Delivery
+
+on:
+  push:
+    branches: ['main']
+    paths:
+      - '.github/workflows/chat-native-v4-delivery.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  deliver:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download NativeAudio v4 installer
+        run: |
+          set -euo pipefail
+          curl -L --fail --retry 3 -o Rhay-Studio-Setup-NativeAudio-v4.exe 'https://release-assets.githubusercontent.com/github-production-release-asset/1314757660/d836b016-cf21-4674-adf3-d715602df2d2?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-08-08T06%3A54%3A06Z&rscd=attachment%3B+filename%3DRhay-Studio-Setup-NativeAudio-v4.exe&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-08-08T05%3A53%3A54Z&ske=2026-08-08T06%3A54%3A06Z&sks=b&skv=2018-11-09&sig=xNrFd2EBZa%2FFNdCmZ3mXUFzmAAu5ELfTpD84q7Ndf%2Bk%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc4NjE2ODczNCwibmJmIjoxNzg2MTY4NDM0LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.N6gEv_lyEqDH4CWWF17ZMvH9QuOLiYsDwZysvMrn1VM&response-content-disposition=attachment%3B%20filename%3DRhay-Studio-Setup-NativeAudio-v4.exe&response-content-type=application%2Foctet-stream'
+          echo '87211754e0fa4a31551320462fb01f90b948cac79f7a56490939fe767823bfe0  Rhay-Studio-Setup-NativeAudio-v4.exe' | sha256sum -c -
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rhay-Studio-Setup-NativeAudio-v4
+          compression-level: 0
+          retention-days: 7
+          path: Rhay-Studio-Setup-NativeAudio-v4.exe
