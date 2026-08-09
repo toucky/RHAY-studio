@@ -1,0 +1,31 @@
+name: Bridge RHAY Studio v13 Release
+
+on:
+  push:
+    branches: ['main']
+    paths:
+      - '.github/workflows/bridge-v13-release.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Télécharger le build privé
+        env:
+          URL: 'https://release-assets.githubusercontent.com/github-production-release-asset/1314757660/543497fd-195e-44eb-8227-b86fb00850b4?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-08-09T05%3A31%3A20Z&rscd=attachment%3B+filename%3DRhay-Studio-Setup-NativeAudio-v13.exe&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-08-09T04%3A30%3A40Z&ske=2026-08-09T05%3A31%3A20Z&sks=b&skv=2018-11-09&sig=23dZ0zotf%2BXk5fTTcDjtOnWFQyt99YliXbm1ZTyjOw8%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc4NjI1MTQ5NCwibmJmIjoxNzg2MjUxMTk0LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.VXdUJMOK_UP5nPs-0LnhvtT013JNBnOQpnSqI0Tlw_E&response-content-disposition=attachment%3B%20filename%3DRhay-Studio-Setup-NativeAudio-v13.exe&response-content-type=application%2Foctet-stream'
+        run: |
+          curl -L --fail --retry 3 "$URL" -o Rhay-Studio-Setup-NativeAudio-v13.exe
+          echo '9b323b079498156711a3419b461c07d72df4a2cffbfb4be7a410bbbfd52d0e6e  Rhay-Studio-Setup-NativeAudio-v13.exe' | sha256sum -c -
+
+      - name: Publier release temporaire
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: rhay-v13-chat-temp
+          name: RHAY Studio v13 temporary delivery
+          prerelease: true
+          make_latest: false
+          fail_on_unmatched_files: true
+          files: Rhay-Studio-Setup-NativeAudio-v13.exe
