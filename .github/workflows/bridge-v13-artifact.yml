@@ -1,0 +1,25 @@
+name: Bridge RHAY Studio v13 Artifact
+
+on:
+  push:
+    branches: ['main']
+    paths:
+      - '.github/workflows/bridge-v13-artifact.yml'
+
+jobs:
+  bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Télécharger v13
+        run: |
+          curl -L --fail --retry 3 \
+            'https://github.com/toucky/RHAY-studio/releases/download/rhay-v13-chat-temp/Rhay-Studio-Setup-NativeAudio-v13.exe' \
+            -o Rhay-Studio-Setup-NativeAudio-v13.exe
+          echo '9b323b079498156711a3419b461c07d72df4a2cffbfb4be7a410bbbfd52d0e6e  Rhay-Studio-Setup-NativeAudio-v13.exe' | sha256sum -c -
+      - name: Joindre comme artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rhay-Studio-NativeAudio-v13-EXE
+          path: Rhay-Studio-Setup-NativeAudio-v13.exe
+          compression-level: 0
+          retention-days: 1
