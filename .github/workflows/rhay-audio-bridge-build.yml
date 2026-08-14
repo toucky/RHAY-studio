@@ -31,15 +31,38 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Build debug APK
-        run: gradle :app:assembleDebug --stacktrace
+      - name: Build unsigned release APK
+        run: gradle :app:assembleRelease --stacktrace
 
-      - name: Prepare APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk Rhay-Audio-Bridge-v1.apk
+      - name: Generate compatibility signing key
+        run: |
+          keytool -genkeypair -v \
+            -keystore compat-release.keystore \
+            -storepass rhaybridge2026 \
+            -keypass rhaybridge2026 \
+            -alias rhaybridge \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Rhay Audio Bridge, OU=APP MADA, O=APP MADA, L=Antananarivo, C=MG"
+
+      - name: Zipalign and sign v1 v2 v3
+        run: |
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/35.0.0"
+          "$BUILD_TOOLS/zipalign" -f -p 4 app/build/outputs/apk/release/app-release-unsigned.apk Rhay-Audio-Bridge-v2-aligned.apk
+          "$BUILD_TOOLS/apksigner" sign \
+            --ks compat-release.keystore \
+            --ks-key-alias rhaybridge \
+            --ks-pass pass:rhaybridge2026 \
+            --key-pass pass:rhaybridge2026 \
+            --v1-signing-enabled true \
+            --v2-signing-enabled true \
+            --v3-signing-enabled true \
+            --out Rhay-Audio-Bridge-v2.apk \
+            Rhay-Audio-Bridge-v2-aligned.apk
+          "$BUILD_TOOLS/apksigner" verify --verbose --print-certs Rhay-Audio-Bridge-v2.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Rhay-Audio-Bridge-v1
-          path: rhay-audio-bridge/Rhay-Audio-Bridge-v1.apk
+          name: Rhay-Audio-Bridge-v2
+          path: rhay-audio-bridge/Rhay-Audio-Bridge-v2.apk
           if-no-files-found: error
