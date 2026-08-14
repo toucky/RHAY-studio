@@ -54,7 +54,7 @@ public class AudioBridgeAccessibilityService extends AccessibilityService {
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-        // Deliberately does not inspect any content from the foreground app.
+        // Deliberately does not inspect foreground app content.
     }
 
     @Override
@@ -193,8 +193,12 @@ public class AudioBridgeAccessibilityService extends AccessibilityService {
                     .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
                     .build();
 
+            int source = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+                    ? MediaRecorder.AudioSource.VOICE_PERFORMANCE
+                    : MediaRecorder.AudioSource.VOICE_RECOGNITION;
+
             AudioRecord.Builder recordBuilder = new AudioRecord.Builder()
-                    .setAudioSource(MediaRecorder.AudioSource.VOICE_PERFORMANCE)
+                    .setAudioSource(source)
                     .setAudioFormat(inputFormat)
                     .setBufferSizeInBytes(bufferBytes);
 
@@ -210,16 +214,19 @@ public class AudioBridgeAccessibilityService extends AccessibilityService {
                     .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
                     .build();
 
-            audioTrack = new AudioTrack.Builder()
+            AudioTrack.Builder trackBuilder = new AudioTrack.Builder()
                     .setAudioAttributes(new AudioAttributes.Builder()
                             .setUsage(AudioAttributes.USAGE_MEDIA)
                             .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                             .build())
                     .setAudioFormat(outputFormat)
                     .setTransferMode(AudioTrack.MODE_STREAM)
-                    .setBufferSizeInBytes(bufferBytes)
-                    .setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY)
-                    .build();
+                    .setBufferSizeInBytes(bufferBytes);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                trackBuilder.setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY);
+            }
+            audioTrack = trackBuilder.build();
 
             AudioDeviceInfo input = chooseInputFor(output);
             if (input != null) audioRecord.setPreferredDevice(input);
@@ -277,10 +284,12 @@ public class AudioBridgeAccessibilityService extends AccessibilityService {
                 if (now - lastStateCheck > 600) {
                     lastStateCheck = now;
                     boolean mutedNow = false;
-                    try {
-                        AudioRecordingConfiguration cfg = rec.getActiveRecordingConfiguration();
-                        mutedNow = cfg != null && cfg.isClientSilenced();
-                    } catch (Throwable ignored) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        try {
+                            AudioRecordingConfiguration cfg = rec.getActiveRecordingConfiguration();
+                            mutedNow = cfg != null && cfg.isClientSilenced();
+                        } catch (Throwable ignored) {
+                        }
                     }
                     if (mutedNow != silenced) {
                         silenced = mutedNow;
