@@ -24,6 +24,21 @@ jobs:
           yes | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --licenses >/dev/null || true
           ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
 
+      - name: Normalize reconstructed source escaping
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('android-shell-v6/src/mg/appmada/rhaystudio/MainActivity.java')
+          s = p.read_text(encoding='utf-8')
+          bad = "raw.replace('\\\\\\\\', '/')"
+          good = "raw.replace('\\\\', '/')"
+          if bad in s:
+              s = s.replace(bad, good)
+          p.write_text(s, encoding='utf-8')
+          PY
+
       - name: Compile Java shell
         shell: bash
         run: |
