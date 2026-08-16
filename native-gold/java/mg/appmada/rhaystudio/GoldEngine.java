@@ -7,20 +7,44 @@ package mg.appmada.rhaystudio;
  * Il ne doit jamais être branché sur AudioRecord, AudioTrack ou le monitoring.
  */
 public final class GoldEngine {
+    private static final boolean AVAILABLE;
+    private static final String LOAD_ERROR;
+
     static {
-        System.loadLibrary("rhaygold");
+        boolean ok = false;
+        String err = "";
+        try {
+            System.loadLibrary("rhaygold");
+            ok = true;
+        } catch (Throwable t) {
+            err = t.getClass().getSimpleName() + ": " + String.valueOf(t.getMessage());
+        }
+        AVAILABLE = ok;
+        LOAD_ERROR = err;
     }
 
     private GoldEngine() {}
 
-    /**
-     * @param interleaved PCM float -1..+1, interleaved par canal
-     * @param channels nombre de canaux
-     * @param sampleRate fréquence d'échantillonnage
-     * @param pitchScale facteur Rubber Band (1.0 = hauteur inchangée)
-     * @return nouveau buffer PCM de même longueur
-     */
-    public static native float[] processRegion(
+    public static boolean isAvailable() {
+        return AVAILABLE;
+    }
+
+    public static String loadError() {
+        return LOAD_ERROR;
+    }
+
+    public static float[] processRegion(
+            float[] interleaved,
+            int channels,
+            int sampleRate,
+            double pitchScale) {
+        if (!AVAILABLE) {
+            throw new IllegalStateException("RHAY GOLD natif indisponible: " + LOAD_ERROR);
+        }
+        return nativeProcessRegion(interleaved, channels, sampleRate, pitchScale);
+    }
+
+    private static native float[] nativeProcessRegion(
             float[] interleaved,
             int channels,
             int sampleRate,
