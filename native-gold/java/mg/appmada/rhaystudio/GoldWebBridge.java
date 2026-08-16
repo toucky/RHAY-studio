@@ -7,7 +7,6 @@ import android.webkit.JavascriptInterface;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -19,10 +18,11 @@ import java.nio.FloatBuffer;
 import java.util.Arrays;
 
 /**
- * Pont WebView -> moteur RHAY CLEAN GOLD.
+ * Pont WebView -> moteur RHAY Auto-Tune CLEAN.
  *
  * Aucun AudioRecord/AudioTrack n'est utilisé ici : ce pont traite uniquement
  * un clip déjà présent dans la WebView et travaille dans le cache de l'app.
+ * Le rendu utilise UNE SEULE instance Rubber Band continue pour le clip entier.
  */
 public final class GoldWebBridge {
     private static final int MAX_PULL_BYTES = 256 * 1024;
@@ -131,11 +131,16 @@ public final class GoldWebBridge {
     }
 
     /**
-     * regionsJson: [{"startFrame":123,"endFrame":456,"pitchScale":1.023}, ...]
-     * Les régions doivent être calculées par le tracking musical RHAY.
+     * curveJson = {
+     *   "controlFrames": 2880,
+     *   "pitchScales": [1.0, 1.0123, ...]
+     * }
+     *
+     * La courbe est calculée par le tracking musical RHAY. Elle est envoyée à
+     * une seule instance Rubber Band. Aucun découpage par note et aucun crossfade.
      */
     @JavascriptInterface
-    public boolean process(String regionsJson) {
+    public boolean processCurve(String curveJson) {
         synchronized (lock) {
             if (busy || inputFile == null || !inputFile.exists() || !GoldEngine.isAvailable()) {
                 return false;
@@ -147,9 +152,15 @@ public final class GoldWebBridge {
             error = "";
         }
 
-        final String json = regionsJson == null ? "[]" : regionsJson;
-        new Thread(() -> runProcess(json), "rhay-gold-render").start();
+        final String json = curveJson == null ? "{}" : curveJson;
+        new Thread(() -> runProcessCurve(json), "rhay-gold-render").start();
         return true;
+    }
+
+    /** Ancien nom conservé pour éviter une casse pendant la migration. */
+    @JavascriptInterface
+    public boolean process(String curveJson) {
+        return processCurve(curveJson);
     }
 
     @JavascriptInterface
@@ -202,7 +213,8 @@ public final class GoldWebBridge {
                     resultRead = null;
                     return "";
                 }
-                return Base64.encodeToString(n == data.length ? data : Arrays.copyOf(data, n), Base64.NO_WRAP);
+                return Base64.encodeToString(
+                        n == data.length ? data : Arrays.copyOf(data, n), Base64.NO_WRAP);
             } catch (IOException e) {
                 error = e.toString();
                 closeQuietly(resultRead);
@@ -231,84 +243,39 @@ public final class GoldWebBridge {
         }
     }
 
-    private void runProcess(String regionsJson) {
+    private void runProcessCurve(String curveJson) {
         try {
             phase = "decode";
+            progress = 5;
             float[] source = readFloatFile(inputFile, frames * channels);
-            float[] output = source.clone();
 
-            JSONArray regions = new JSONArray(regionsJson);
-            int count = regions.length();
-            int padFrames = Math.max(1, Math.round(sampleRate * 0.120f));
-            int maxFade = Math.max(1, Math.round(sampleRate * 0.050f));
+            JSONObject cfg = new JSONObject(curveJson);
+            int controlFrames = cfg.optInt("controlFrames", Math.max(1, Math.round(sampleRate * 0.060f)));
+            if (controlFrames <= 0) throw new IllegalArgumentException("controlFrames invalide");
 
-            for (int ri = 0; ri < count; ri++) {
-                JSONObject r = regions.getJSONObject(ri);
-                int coreStart = clamp(r.getInt("startFrame"), 0, frames);
-                int coreEnd = clamp(r.getInt("endFrame"), coreStart, frames);
-                double pitchScale = r.getDouble("pitchScale");
-                int coreFrames = coreEnd - coreStart;
-                if (coreFrames < Math.round(sampleRate * 0.060f) ||
-                        !Double.isFinite(pitchScale) || pitchScale < 0.25 || pitchScale > 4.0 ||
-                        Math.abs(pitchScale - 1.0) < 0.00001) {
-                    progress = count == 0 ? 95 : 5 + (int) Math.round(88.0 * (ri + 1) / count);
-                    continue;
-                }
-
-                int p0 = Math.max(0, coreStart - padFrames);
-                int p1 = Math.min(frames, coreEnd + padFrames);
-                int segmentFrames = p1 - p0;
-                float[] segment = new float[segmentFrames * channels];
-                System.arraycopy(source, p0 * channels, segment, 0, segment.length);
-
-                phase = "pitch " + (ri + 1) + "/" + count;
-                float[] tuned = GoldEngine.processRegion(segment, channels, sampleRate, pitchScale);
-                if (tuned == null || tuned.length != segment.length) {
-                    throw new IllegalStateException("native region length mismatch");
-                }
-
-                int a = coreStart - p0;
-                int b = coreEnd - p0;
-                double origEnergy = 1e-12;
-                double tuneEnergy = 1e-12;
-                long samples = 0;
-                for (int f = a; f < b; f++) {
-                    for (int c = 0; c < channels; c++) {
-                        float ov = source[(p0 + f) * channels + c];
-                        float tv = tuned[f * channels + c];
-                        origEnergy += ov * ov;
-                        tuneEnergy += tv * tv;
-                        samples++;
-                    }
-                }
-                double gain = Math.sqrt(origEnergy / tuneEnergy);
-                double minGain = Math.pow(10.0, -2.0 / 20.0);
-                double maxGain = Math.pow(10.0,  2.0 / 20.0);
-                gain = Math.max(minGain, Math.min(maxGain, gain));
-
-                int fadeFrames = Math.min(maxFade, Math.max(1, coreFrames / 3));
-                for (int f = 0; f < coreFrames; f++) {
-                    double w = 1.0;
-                    if (f < fadeFrames) {
-                        double x = (double) f / Math.max(1, fadeFrames - 1);
-                        w = 0.5 - 0.5 * Math.cos(Math.PI * x);
-                    } else if (f >= coreFrames - fadeFrames) {
-                        double x = (double) (coreFrames - 1 - f) / Math.max(1, fadeFrames - 1);
-                        w = 0.5 - 0.5 * Math.cos(Math.PI * x);
-                    }
-                    int globalFrame = coreStart + f;
-                    int localFrame = a + f;
-                    for (int c = 0; c < channels; c++) {
-                        int oi = globalFrame * channels + c;
-                        float dry = output[oi];
-                        float wet = (float) (tuned[localFrame * channels + c] * gain);
-                        output[oi] = (float) (dry * (1.0 - w) + wet * w);
-                    }
-                }
-
-                progress = count == 0 ? 95 : 5 + (int) Math.round(88.0 * (ri + 1) / count);
+            JSONArray arr = cfg.optJSONArray("pitchScales");
+            if (arr == null || arr.length() == 0) {
+                throw new IllegalArgumentException("courbe de pitch vide");
             }
 
+            double[] scales = new double[arr.length()];
+            for (int i = 0; i < scales.length; i++) {
+                double v = arr.getDouble(i);
+                if (!Double.isFinite(v) || v < 0.25 || v > 4.0) {
+                    throw new IllegalArgumentException("ratio pitch invalide à " + i);
+                }
+                scales[i] = v;
+            }
+
+            phase = "Rubber Band continu";
+            progress = 18;
+            float[] output = GoldEngine.processCurve(
+                    source, channels, sampleRate, scales, controlFrames);
+            if (output == null || output.length != source.length) {
+                throw new IllegalStateException("native curve length mismatch");
+            }
+
+            progress = 92;
             phase = "write";
             writeFloatFile(outputFile, output);
             progress = 100;
@@ -350,10 +317,6 @@ public final class GoldWebBridge {
             out.write(bb.array());
             out.flush();
         }
-    }
-
-    private static int clamp(int v, int lo, int hi) {
-        return Math.max(lo, Math.min(hi, v));
     }
 
     private static void closeQuietly(Closeable c) {
