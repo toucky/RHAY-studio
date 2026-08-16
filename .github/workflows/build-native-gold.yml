@@ -1,0 +1,60 @@
+name: Build RHAY AutoTune CLEAN GOLD native prototype
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - autotune-clean-gold-native-prototype
+    paths:
+      - 'native-gold/**'
+      - '.github/workflows/build-native-gold.yml'
+
+jobs:
+  android-native:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout RHAY Studio
+        uses: actions/checkout@v4
+
+      - name: Checkout Rubber Band 3.3.0 (frozen GOLD engine)
+        uses: actions/checkout@v4
+        with:
+          repository: breakfastquay/rubberband
+          ref: v3.3.0
+          path: third_party/rubberband
+
+      - name: Install Android NDK
+        shell: bash
+        run: |
+          yes | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --licenses >/dev/null || true
+          ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager 'ndk;27.2.12479018' 'cmake;3.22.1'
+
+      - name: Build arm64-v8a and armeabi-v7a
+        shell: bash
+        run: |
+          set -euo pipefail
+          NDK="${ANDROID_SDK_ROOT}/ndk/27.2.12479018"
+          CMAKE_BIN="${ANDROID_SDK_ROOT}/cmake/3.22.1/bin/cmake"
+          mkdir -p native-gold/out
+          for ABI in arm64-v8a armeabi-v7a; do
+            BUILD="native-gold/build-${ABI}"
+            "$CMAKE_BIN" -S native-gold -B "$BUILD" -G Ninja \
+              -DCMAKE_TOOLCHAIN_FILE="$NDK/build/cmake/android.toolchain.cmake" \
+              -DANDROID_ABI="$ABI" \
+              -DANDROID_PLATFORM=android-24 \
+              -DANDROID_STL=c++_shared \
+              -DRUBBERBAND_DIR="$GITHUB_WORKSPACE/third_party/rubberband" \
+              -DCMAKE_BUILD_TYPE=Release
+            "$CMAKE_BIN" --build "$BUILD" --config Release
+            mkdir -p "native-gold/out/${ABI}"
+            cp "$BUILD/librhaygold.so" "native-gold/out/${ABI}/librhaygold.so"
+          done
+          cp "$NDK/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so" native-gold/out/arm64-v8a/libc++_shared.so || true
+          cp "$NDK/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/libc++_shared.so" native-gold/out/armeabi-v7a/libc++_shared.so || true
+
+      - name: Upload native libraries
+        uses: actions/upload-artifact@v4
+        with:
+          name: rhay-gold-native-android
+          path: native-gold/out/**
+          if-no-files-found: error
