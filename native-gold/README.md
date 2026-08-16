@@ -2,7 +2,7 @@
 
 Cette zone est un prototype isolé. Elle ne modifie pas l'interface ou le monitoring de RHAY Studio.
 
-Objectif : porter le moteur de pitch validé CLEAN GOLD dans un traitement natif Android hors ligne, puis comparer son rendu au WAV GOLD avant toute intégration dans l'APK.
+Objectif : porter le traitement validé CLEAN GOLD dans Android hors ligne, puis comparer son rendu au WAV GOLD avant toute intégration dans l'APK.
 
 ## Règles figées
 
@@ -14,10 +14,10 @@ Objectif : porter le moteur de pitch validé CLEAN GOLD dans un traitement natif
 - zones non fiables conservées depuis la source ;
 - pas de PSOLA ;
 - pas de de-clicker utilisé pour masquer un défaut de moteur ;
-- moteur de pitch : Rubber Band avec réglages GOLD ;
-- aucune livraison commerciale de Rubber Band sans respecter sa licence GPL ou obtenir une licence commerciale.
+- aucune livraison commerciale de Rubber Band sans respecter sa licence GPL ou obtenir une licence commerciale ;
+- le WAV CLEAN GOLD validé reste la référence sonore absolue.
 
-## Réglages moteur GOLD utilisés pour le prototype
+## Réglages Rubber Band étudiés
 
 - Transients: Smooth
 - Detector: Soft
@@ -29,12 +29,30 @@ Objectif : porter le moteur de pitch validé CLEAN GOLD dans un traitement natif
 - Channels: Together
 - Tempo: 1.0
 
-Le moteur recevra des régions vocales stables et une translation de hauteur par région. Chaque région est traitée avec contexte, puis réinsérée avec raccord de synthèse. Ce raccord n'est pas un dry/wet de correction : il sert uniquement à assurer la continuité entre audio original et rendu.
+## ARCHITECTURE REJETÉE — NE PAS INTÉGRER
+
+Le prototype qui crée une instance de pitch-shifter par note/région puis réinsère chaque rendu avec un crossfade est **rejeté**.
+
+Raisons confirmées à l'écoute :
+
+1. Le crossfade mélange temporairement audio brut et audio corrigé. Même s'il devait servir uniquement de raccord, il produit deux hauteurs/phases simultanées et donc un effet chorus/unisson.
+2. Redémarrer le pitch-shifter pour chaque note réinitialise son état spectral/phase. Les raccords entre instances peuvent produire les craquements qui réapparaissent sur les notes longues.
+3. Le fichier GOLD validé ne présente ni ce chorus ni ces craquements. Une architecture qui les introduit est donc invalide, même si ses mesures de pitch sont bonnes.
+
+Conséquence : **aucun code “per-note + crossfade” ne doit être raccordé à l'APK.**
+
+## Direction correcte à reprendre
+
+- conserver un chemin de sortie unique ;
+- aucune superposition brut/tuné pendant la correction ;
+- préserver l'état de phase du moteur sur toute la zone vocale concernée ;
+- reconstruire exactement la trajectoire/stratégie qui a produit le WAV GOLD, puis effectuer une comparaison A/B stricte ;
+- ne modifier l'APK qu'après validation sonore sur la même brute.
 
 ## Étapes
 
-1. Valider le wrapper natif sur la même brute que le GOLD.
-2. Comparer notes longues et absence de doublage/craquement.
-3. Ajouter le pont Java/JNI.
-4. Ajouter le transfert de clip hors ligne depuis la WebView.
-5. Seulement après validation, intégrer à la branche de l'application.
+1. Utiliser la brute et le WAV GOLD comme paire de référence.
+2. Reconstituer le traitement qui produit une seule voix continue sans reset par note.
+3. Rejeter automatiquement toute sortie avec chorus, doublage ou craquement avant envoi utilisateur.
+4. Valider à l'écoute contre GOLD.
+5. Seulement après validation, raccorder le pont Java/JNI et intégrer à l'application.
