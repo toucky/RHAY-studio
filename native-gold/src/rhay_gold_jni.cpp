@@ -4,7 +4,7 @@
 #include <vector>
 
 extern "C" JNIEXPORT jfloatArray JNICALL
-Java_mg_appmada_rhaystudio_GoldEngine_processRegion(
+Java_mg_appmada_rhaystudio_GoldEngine_nativeProcessRegion(
     JNIEnv* env,
     jclass,
     jfloatArray input,
