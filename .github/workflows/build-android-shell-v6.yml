@@ -1,0 +1,56 @@
+name: Build RHAY Android shell v6 dex
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - autotune-clean-gold-native-prototype
+    paths:
+      - 'android-shell-v6/**'
+      - 'native-gold/java/**'
+      - '.github/workflows/build-android-shell-v6.yml'
+
+jobs:
+  dex:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Android platform and build-tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --licenses >/dev/null || true
+          ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+
+      - name: Compile Java shell
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p android-shell-v6/classes android-shell-v6/out
+          javac -source 8 -target 8 \
+            -cp "${ANDROID_SDK_ROOT}/platforms/android-35/android.jar" \
+            -d android-shell-v6/classes \
+            android-shell-v6/src/mg/appmada/rhaystudio/MainActivity.java \
+            native-gold/java/mg/appmada/rhaystudio/GoldEngine.java \
+            native-gold/java/mg/appmada/rhaystudio/GoldWebBridge.java
+
+      - name: Build classes.dex
+        shell: bash
+        run: |
+          set -euo pipefail
+          "${ANDROID_SDK_ROOT}/build-tools/35.0.0/d8" \
+            --min-api 24 \
+            --lib "${ANDROID_SDK_ROOT}/platforms/android-35/android.jar" \
+            --output android-shell-v6/out \
+            $(find android-shell-v6/classes -type f -name '*.class' | sort)
+          test -f android-shell-v6/out/classes.dex
+          ls -lh android-shell-v6/out/classes.dex
+
+      - name: Upload dex
+        uses: actions/upload-artifact@v4
+        with:
+          name: rhay-android-shell-v6-dex
+          path: android-shell-v6/out/classes.dex
+          if-no-files-found: error
