@@ -1,7 +1,7 @@
 package mg.appmada.rhaystudio;
 
 /**
- * Pont natif RHAY Auto-Tune CLEAN GOLD.
+ * Pont natif RHAY Auto-Tune CLEAN.
  *
  * Le moteur ne doit être appelé que sur un clip déjà enregistré.
  * Il ne doit jamais être branché sur AudioRecord, AudioTrack ou le monitoring.
@@ -33,6 +33,7 @@ public final class GoldEngine {
         return LOAD_ERROR;
     }
 
+    /** Compatibilité : correction constante sur tout le tampon. */
     public static float[] processRegion(
             float[] interleaved,
             int channels,
@@ -44,9 +45,36 @@ public final class GoldEngine {
         return nativeProcessRegion(interleaved, channels, sampleRate, pitchScale);
     }
 
+    /**
+     * Auto-Tune continu : une seule instance Rubber Band pour tout le clip.
+     * pitchScales = ratios successifs (1.0 = hauteur inchangée).
+     * controlFrames = nombre d'images audio entre deux valeurs de la courbe.
+     */
+    public static float[] processCurve(
+            float[] interleaved,
+            int channels,
+            int sampleRate,
+            double[] pitchScales,
+            int controlFrames) {
+        if (!AVAILABLE) {
+            throw new IllegalStateException("RHAY GOLD natif indisponible: " + LOAD_ERROR);
+        }
+        if (pitchScales == null || pitchScales.length == 0 || controlFrames <= 0) {
+            throw new IllegalArgumentException("Courbe Auto-Tune invalide");
+        }
+        return nativeProcessCurve(interleaved, channels, sampleRate, pitchScales, controlFrames);
+    }
+
     private static native float[] nativeProcessRegion(
             float[] interleaved,
             int channels,
             int sampleRate,
             double pitchScale);
+
+    private static native float[] nativeProcessCurve(
+            float[] interleaved,
+            int channels,
+            int sampleRate,
+            double[] pitchScales,
+            int controlFrames);
 }
