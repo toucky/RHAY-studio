@@ -258,13 +258,26 @@ public final class GoldWebBridge {
                 throw new IllegalArgumentException("courbe de pitch vide");
             }
 
+            /*
+             * JSON.stringify convertit NaN/Infinity en null. Sur quelques micro-zones
+             * YIN incertaines, une ancienne courbe pouvait donc contenir null et
+             * JSONArray#getDouble levait une JSONException, rendant Auto-Tune
+             * totalement inaccessible. Ici on garde simplement le dernier ratio
+             * valide (1.0 au départ). Cela conserve une trajectoire continue et
+             * n'ajoute ni dry/wet ni nouvelle voix.
+             */
             double[] scales = new double[arr.length()];
+            double previous = 1.0;
             for (int i = 0; i < scales.length; i++) {
-                double v = arr.getDouble(i);
+                double v = previous;
+                if (!arr.isNull(i)) {
+                    v = arr.optDouble(i, previous);
+                }
                 if (!Double.isFinite(v) || v < 0.25 || v > 4.0) {
-                    throw new IllegalArgumentException("ratio pitch invalide à " + i);
+                    v = previous;
                 }
                 scales[i] = v;
+                previous = v;
             }
 
             phase = "Rubber Band continu";
