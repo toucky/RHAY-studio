@@ -53,7 +53,7 @@ dialog{border:1px solid white;border-radius:25px;background:#f8f9fd;color:#30374
 <div id="status" class="status" hidden></div><button class="textbtn" id="cancel" hidden>Annuler l’attente</button>
 </section>
 </div>
-<div class="bottom">SOUVENIR 1.2 · DES MOMENTS À GARDER</div>
+<div class="bottom">SOUVENIR 1.2.1 · DES MOMENTS À GARDER</div>
 <input type="file" id="file" accept="image/jpeg,image/png,image/webp" hidden>
 </main>
 
@@ -91,8 +91,8 @@ return preserve+repair+enhance+color;
 function size(){const r=source.width/source.height;return r>1.2?'1536x1024':r<.83?'1024x1536':'1024x1024'}
 function waitProgress(){const sec=Math.floor((Date.now()-start)/1000);setProgress(Math.min(95,Math.round(95*(1-Math.exp(-sec/60)))));msg(progressPercent>=95?'Le traitement continue. En attente du résultat…':'Restauration en cours · '+progressPercent+' %')}
 window.nativeComplete=async(job,payload)=>{if(job!==activeJob)return;clearInterval(timer);busy=false;if(payload.error){msg(payload.error,'error');refresh();return}try{await decode(payload.url);result=payload.url;$('after').src=result;$('after').hidden=false;for(const id of ['divider','afterLabel','compareLabel','save'])$(id).hidden=false;$('compare').value=50;$('compare').oninput();setProgress(100);msg('Votre photo est prête.','success')}catch(e){msg('Résultat impossible à afficher.','error')}refresh()}
-window.nativeSaved=ok=>msg(ok?'Photo enregistrée.':'Enregistrement impossible.',ok?'success':'error')
-$('run').onclick=()=>{if(!source||busy)return;if(!key.trim()){$('settings').showModal();$('key').focus();return}busy=true;activeJob=String(Date.now());start=Date.now();setProgress(0);refresh();msg('Envoi de la photo…');timer=setInterval(waitProgress,1000);const request={model:'gpt-image-1.5',prompt:promptText(),quality:'medium',size:size(),input_fidelity:'high',n:1,output_format:'jpeg',output_compression:95};Android.restore(JSON.stringify({job:activeJob,key,image:source.data,request}))}
+window.nativeSaved=ok=>msg(ok?'Photo enregistrée.':'Enregistrement impossible.',ok?'success':'error')\nwindow.nativeRetry=job=>{if(job===activeJob)msg('Nouvel essai automatique avec un mode compatible…')}
+$('run').onclick=()=>{if(!source||busy)return;if(!key.trim()){$('settings').showModal();$('key').focus();return}busy=true;activeJob=String(Date.now());start=Date.now();setProgress(0);refresh();msg('Envoi de la photo…');timer=setInterval(waitProgress,1000);const request={model:'gpt-image-2',prompt:promptText(),quality:'medium',size:size(),output_format:'jpeg'};Android.restore(JSON.stringify({job:activeJob,key,image:source.data,request}))}
 $('cancel').onclick=()=>{if(!busy)return;Android.cancel(activeJob);activeJob=null;clearInterval(timer);busy=false;refresh();msg('Attente annulée.')}
 $('save').onclick=()=>{if(result)Android.saveResult()}
 $('settingsButton').onclick=()=>{$('key').value=key;$('settings').showModal()}
