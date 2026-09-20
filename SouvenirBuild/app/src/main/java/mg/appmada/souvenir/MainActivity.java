@@ -185,6 +185,19 @@ public class MainActivity extends Activity {
         return t.isEmpty() || t.contains("bad request") || t.contains("model") || t.contains("unsupported") || t.contains("parameter");
     }
 
+    private void write(OutputStream out, String s) throws IOException {
+        out.write(s.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private String readAll(InputStream in) throws IOException {
+        if (in == null) return "";
+        ByteArrayOutputStream b = new ByteArrayOutputStream();
+        byte[] buf = new byte[8192];
+        int n;
+        while ((n = in.read(buf)) != -1) b.write(buf, 0, n);
+        return b.toString("UTF-8");
+    }
+
     public class Bridge {
         @JavascriptInterface public boolean storeKey(String key) {
             getSharedPreferences("souvenir", MODE_PRIVATE).edit().putString("api_key", key == null ? "" : key).apply();
