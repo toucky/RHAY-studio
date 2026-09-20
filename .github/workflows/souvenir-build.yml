@@ -1,0 +1,32 @@
+name: Build Souvenir APK
+on:
+  push:
+    branches:
+      - build/souvenir-1.2-standard
+    paths:
+      - 'SouvenirBuild/**'
+      - '.github/workflows/souvenir-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+      - name: Build debug APK
+        working-directory: SouvenirBuild
+        run: gradle --no-daemon :app:assembleDebug
+      - name: Prepare deliverable
+        run: cp SouvenirBuild/app/build/outputs/apk/debug/app-debug.apk Souvenir-APP-MADA-v1.2.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Souvenir-APP-MADA-v1.2
+          path: Souvenir-APP-MADA-v1.2.apk
+          if-no-files-found: error
